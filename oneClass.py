@@ -11,7 +11,7 @@ def load_images_from_folder(folder):
         img_path = os.path.join(folder, filename)
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         if img is not None:
-            img = cv2.resize(img, (128, 128))  # Resize to standard size
+            img = cv2.resize(img, (256, 256))  # Resize to standard size
             img = img.flatten()  # Flatten image for SVM input
             images.append(img)
     return np.array(images)
@@ -19,7 +19,7 @@ def load_images_from_folder(folder):
 def load_single_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is not None:
-        img = cv2.resize(img, (128, 128))
+        img = cv2.resize(img, (256, 256))
         img = img.flatten().reshape(1, -1)  # Reshape for SVM input
     return img
 
@@ -36,7 +36,7 @@ oc_svm = OneClassSVM(kernel='rbf', gamma=0.1, nu=0.1, tol=0.001)  # nu controls 
 oc_svm.fit(train_images)
 
 # Compute average normal image for difference visualization
-mean_normal_image = np.mean(train_images, axis=0).reshape(128, 128)
+mean_normal_image = np.mean(train_images, axis=0).reshape(256, 256)
 
 # Test on a single image
 test_image = load_single_image(test_image_path)
@@ -44,7 +44,7 @@ if test_image is not None:
     prediction = oc_svm.predict(test_image)[0]
     label = "Normal" if prediction == 1 else "Anomalous"
     
-    test_image_reshaped = test_image.reshape(128, 128)
+    test_image_reshaped = test_image.reshape(256, 256)
     
     # Show original test image
     plt.figure(figsize=(10, 4))
@@ -60,7 +60,7 @@ if test_image is not None:
         plt.title("Difference Map")
         
         # Heatmap of anomaly score
-        anomaly_score = test_image.reshape(128, 128) - mean_normal_image
+        anomaly_score = test_image.reshape(256, 256) - mean_normal_image
         plt.subplot(1, 3, 3)
         sns.heatmap(anomaly_score, cmap='coolwarm', center=0)
         plt.title("Anomaly Heatmap")
