@@ -62,7 +62,8 @@ if test_image is not None:
         # Heatmap of anomaly score
         anomaly_score = test_image.reshape(256, 256) - mean_normal_image
         plt.subplot(1, 3, 3)
-        sns.heatmap(anomaly_score, cmap='coolwarm', center=0)
+        plt.imshow(anomaly_score, cmap='coolwarm', interpolation='nearest')
+        plt.colorbar(fraction=0.046, pad=0.04)
         plt.title("Anomaly Heatmap")
     
     plt.show()
