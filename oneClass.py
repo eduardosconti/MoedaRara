@@ -26,7 +26,7 @@ def load_single_image(image_path):
 # Define dataset paths
 base_path = os.path.dirname(os.path.abspath(__file__))  # Replace with your actual base path
 train_path = os.path.join(base_path, "Cruzeiro_Novo", "output treino", "verso")
-test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "verso", "1 centavo 1967 verso (2).png")
+test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "verso", "1 centavo 1967 verso (3).png")
 
 # Load training images
 train_images = load_images_from_folder(train_path)
