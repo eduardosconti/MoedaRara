@@ -4,6 +4,7 @@ import numpy as np
 import seaborn as sns
 from sklearn.svm import OneClassSVM
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
 def load_images_from_folder(folder):
     images = []
@@ -31,8 +32,12 @@ test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "10",
 # Load training images
 train_images = load_images_from_folder(train_path)
 
+# Standardize the data
+scaler = StandardScaler()
+train_images = scaler.fit_transform(train_images)
+
 # Train One-Class SVM
-oc_svm = OneClassSVM(kernel='rbf', gamma=0.1, nu=0.1, tol=0.001)  # nu controls the outlier fraction
+oc_svm = OneClassSVM(kernel='rbf', gamma=0.001, nu=0.01)  # nu controls the outlier fraction
 oc_svm.fit(train_images)
 
 # Compute average normal image for difference visualization
@@ -65,7 +70,7 @@ if test_image is not None:
         plt.imshow(anomaly_score, cmap='coolwarm', interpolation='nearest')
         plt.colorbar(fraction=0.046, pad=0.04)
         plt.title("Anomaly Heatmap")
-    
+        
     plt.show()
 else:
     print("Error loading test image.")
