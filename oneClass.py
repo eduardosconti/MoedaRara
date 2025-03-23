@@ -25,14 +25,14 @@ def load_single_image(image_path):
 
 # Define dataset paths
 base_path = os.path.dirname(os.path.abspath(__file__))  # Replace with your actual base path
-train_path = os.path.join(base_path, "Cruzeiro_Novo", "output treino", "verso")
-test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "verso", "1 centavo 1967 verso (3).png")
+train_path = os.path.join(base_path, "Cruzeiro_Novo", "output treino", "10")
+test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "10", "10 centavos 1967 frente (10).png")
 
 # Load training images
 train_images = load_images_from_folder(train_path)
 
 # Train One-Class SVM
-oc_svm = OneClassSVM(kernel='rbf', gamma=1.0, nu=0.1, shrinking=False, tol=0.00001)  # nu controls the outlier fraction
+oc_svm = OneClassSVM(kernel='rbf', gamma=0.1, nu=0.1, tol=0.001)  # nu controls the outlier fraction
 oc_svm.fit(train_images)
 
 # Compute average normal image for difference visualization
