@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Teste Classificador</title>
+	</head>
+	<body>
+		<h1>Enviar Imagem para Classificação</h1>
+		<form
+			id="form-image"
+			action="http://127.0.0.1:5000/classificar"
+			method="POST"
+			enctype="multipart/form-data"
+		>
+			<label for="image">Escolha uma imagem de moeda:</label>
+			<input type="file" id="image" name="image" accept="image/*" required />
+			<br /><br />
+			<button type="submit">Enviar Imagem</button>
+		</form>
+
+		<button id="reset-btn">Resetar</button>
+
+		<h2>Resultados</h2>
+		<p id="classe"></p>
+		<p id="status"></p>
+		<div id="diff_map"></div>
+
+		<div id="imagens-container"></div>
+		<!-- Container para imagens de moedas -->
+
+		<script>
+			const form = document.getElementById("form-image");
+			const resetButton = document.getElementById("reset-btn");
+			const imagensContainer = document.getElementById("imagens-container");
+
+			// Quando o formulário for enviado
+			form.addEventListener("submit", (event) => {
+				event.preventDefault(); // Impede o comportamento padrão do formulário
+
+				const formData = new FormData(form); // Cria o FormData com os dados do formulário
+
+				fetch("http://127.0.0.1:5000/classificar", {
+					method: "POST",
+					body: formData,
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						console.log(data); // Verifica os dados recebidos
+
+						// Exibe os resultados na tela
+						document.getElementById(
+							"classe"
+						).innerText = `Classe da Moeda: ${data.classe_moeda}`;
+						document.getElementById("status").innerText = `Status: ${data.status}`;
+
+						if (data.diff_map) {
+							console.log("Mapa de Diferenças: ", data.diff_map); // Verifica o mapa de diferenças
+							const imgDiff = new Image();
+							imgDiff.src = "data:image/png;base64," + data.diff_map;
+							document.getElementById("diff_map").appendChild(imgDiff);
+						}
+
+						// Exibe a imagem da moeda
+						const moedaImage = new Image();
+						moedaImage.src = URL.createObjectURL(formData.get("image"));
+						moedasContainer.appendChild(moedaImage);
+					})
+					.catch((err) => {
+						console.error("Erro na requisição: ", err);
+					});
+			});
+
+			// Função para resetar a tela
+			resetButton.addEventListener("click", () => {
+				// Limpa os resultados e o container de imagens
+				document.getElementById("classe").innerText = "";
+				document.getElementById("status").innerText = "";
+				document.getElementById("diff_map").innerHTML = "";
+				imagensContainer.innerHTML = ""; // Limpa todas as imagens
+
+				console.log("Tela resetada!");
+			});
+		</script>
+	</body>
+</html>
