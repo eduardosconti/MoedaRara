@@ -12,8 +12,8 @@ def load_images_from_folder(folder):
         img_path = os.path.join(folder, filename)
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         if img is not None:
-            img = cv2.resize(img, (256, 256))  # Resize to standard size
-            img = img.flatten()  # Flatten image for SVM input
+            img = cv2.resize(img, (256, 256))
+            img = img.flatten()
             images.append(img)
     return np.array(images)
 
@@ -21,56 +21,54 @@ def load_single_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is not None:
         img = cv2.resize(img, (256, 256))
-        img = img.flatten().reshape(1, -1)  # Reshape for SVM input
+        img = img.flatten().reshape(1, -1)
     return img
 
-# Define dataset paths
-base_path = os.path.dirname(os.path.abspath(__file__))  # Replace with your actual base path
-train_path = os.path.join(base_path, "Cruzeiro_Novo", "output treino", "10")
-test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", "10", "10 centavos 1967 frente (10).png")
+def save_image(image, filename):
+    plt.savefig(filename, bbox_inches='tight')
+    plt.close()
 
-# Load training images
+moeda = "10" # 1 2 5 10 20 50 verso
+base_path = os.path.dirname(os.path.abspath(__file__))
+train_path = os.path.join(base_path, "Cruzeiro_Novo", "output treino", moeda)
+test_image_path = os.path.join(base_path, "Cruzeiro_Novo", "output teste", moeda)
+save_path = os.path.join(base_path, "Cruzeiro_Novo", "output resultados", moeda)
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
 train_images = load_images_from_folder(train_path)
-
-# Standardize the data
 scaler = StandardScaler()
 train_images = scaler.fit_transform(train_images)
-
-# Train One-Class SVM
-oc_svm = OneClassSVM(kernel='rbf', gamma=0.001, nu=0.01)  # nu controls the outlier fraction
+oc_svm = OneClassSVM(kernel='rbf', gamma=0.001, nu=0.01)
 oc_svm.fit(train_images)
 
-# Compute average normal image for difference visualization
 mean_normal_image = np.mean(train_images, axis=0).reshape(256, 256)
 
-# Test on a single image
-test_image = load_single_image(test_image_path)
-if test_image is not None:
-    prediction = oc_svm.predict(test_image)[0]
-    label = "Normal" if prediction == 1 else "Anomalous"
-    
-    test_image_reshaped = test_image.reshape(256, 256)
-    
-    # Show original test image
-    plt.figure(figsize=(10, 4))
-    plt.subplot(1, 3, 1)
-    plt.imshow(test_image_reshaped, cmap='gray')
-    plt.title(f"Test Image - {label}")
-    
-    if prediction == -1:
-        # Difference visualization
-        diff_image = np.abs(test_image_reshaped - mean_normal_image)
-        plt.subplot(1, 3, 2)
-        plt.imshow(diff_image, cmap='hot')
-        plt.title("Difference Map")
+for image_name in os.listdir(test_image_path):
+    test_image = load_single_image(os.path.join(test_image_path, image_name))
+    if test_image is not None:
+        prediction = oc_svm.predict(test_image)[0]
+        label = "Normal" if prediction == 1 else "Anomalous"
+        test_image_reshaped = test_image.reshape(256, 256)
         
-        # Heatmap of anomaly score
-        anomaly_score = test_image.reshape(256, 256) - mean_normal_image
-        plt.subplot(1, 3, 3)
-        plt.imshow(anomaly_score, cmap='coolwarm', interpolation='nearest')
-        plt.colorbar(fraction=0.046, pad=0.04)
-        plt.title("Anomaly Heatmap")
+        plt.figure(figsize=(10, 4))
+        plt.imshow(test_image_reshaped, cmap='gray')
+        plt.title(f"Test Image - {label}")
+        save_image(plt, os.path.join(save_path, f"{image_name}_test.png"))
         
-    plt.show()
-else:
-    print("Error loading test image.")
+        if prediction == -1:
+            diff_image = np.abs(test_image_reshaped - mean_normal_image)
+            plt.figure()
+            plt.imshow(diff_image, cmap='hot')
+            plt.title("Diff Map")
+            save_image(plt, os.path.join(save_path, f"{image_name}_diff.png"))
+            
+            anomaly_score = test_image_reshaped - mean_normal_image
+            plt.figure()
+            plt.imshow(anomaly_score, cmap='coolwarm', interpolation='nearest')
+            plt.colorbar(fraction=0.046, pad=0.04)
+            plt.title("Anomaly Heatmap")
+            save_image(plt, os.path.join(save_path, f"{image_name}_heatmap.png"))
+    else:
+        print(f"Error loading test image: {image_name}")
