@@ -34,18 +34,28 @@ test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        # Camada 1: 1 canal de entrada (grayscale), 32 filtros 3x3
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)  # padding mantém dimensões
+        # Camada 2: 32 canais de entrada, 64 filtros 3x3
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        # Pooling com janela 2x2 (reduz dimensões pela metade)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(64 * 32 * 32, 128)
-        self.fc2 = nn.Linear(128, 5)  
+        # Camadas fully connected
+        self.fc1 = nn.Linear(64 * 32 * 32, 128)  # Cálculo corrigido aqui
+        self.fc2 = nn.Linear(128, 5)  # 5 classes de saída
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 64 * 32 * 32)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        # Input: [batch, 1, 128, 128]
+        # Conv1 + ReLU + Pooling
+        x = self.pool(F.relu(self.conv1(x)))  # [batch, 32, 64, 64]
+        # Conv2 + ReLU + Pooling
+        x = self.pool(F.relu(self.conv2(x)))  # [batch, 64, 32, 32]
+        # Flatten
+        x = x.view(-1, 64 * 32 * 32)  # [batch, 65536]
+        # FC1 + ReLU
+        x = F.relu(self.fc1(x))  # [batch, 128]
+        # FC2 (output)
+        x = self.fc2(x)  # [batch, 5]
         return x
 
 # Inicializa modelo, loss e otimizador
