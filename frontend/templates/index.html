@@ -3,456 +3,202 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>MoedaRara - Classificador de Moedas</title>
+		<title>MoedaRara AR</title>
 		<style>
 			body {
 				font-family: Arial, sans-serif;
 				max-width: 800px;
 				margin: 0 auto;
 				padding: 20px;
-			}
-			#imagens-container img {
-				max-width: 300px;
-				margin: 10px;
-				border: 1px solid #ddd;
-				display: block;
-			}
-			form {
 				background: #f5f5f5;
-				padding: 20px;
-				border-radius: 8px;
-				margin-bottom: 20px;
 			}
-			button {
-				padding: 8px 16px;
-				background: #4caf50;
-				color: white;
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-			}
-			button:disabled {
-				background: #cccccc;
-			}
-			#reset-btn {
-				background: #f44336;
-				margin-left: 10px;
-			}
-			#switch-mode {
-				background: #2196f3;
-			}
-			h2 {
-				margin-top: 30px;
-				border-bottom: 1px solid #eee;
-				padding-bottom: 5px;
-			}
-			.mode-section {
-				display: none;
-			}
-			.active {
-				display: block;
-			}
-			#ar-container {
+			#camera-container {
 				position: relative;
 				width: 100%;
-				height: 60vh;
+				height: 500px;
+				border: 3px solid #2196f3;
+				border-radius: 10px;
 				overflow: hidden;
-				margin-bottom: 20px;
-				border: 2px solid #ddd;
-				border-radius: 8px;
 			}
-			#video,
-			#overlay {
-				position: absolute;
-				top: 0;
-				left: 0;
+			#video {
 				width: 100%;
 				height: 100%;
-				object-fit: contain;
+				object-fit: cover;
+				transform: scaleX(-1);
 			}
-			#overlay {
+			#target-overlay {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 250px;
+				height: 250px;
+				border: 3px dashed #4caf50;
+				border-radius: 50%;
 				pointer-events: none;
-				z-index: 10;
 			}
-			.controls {
-				display: flex;
-				gap: 10px;
-				margin-bottom: 15px;
+			#capture-btn {
+				display: block;
+				margin: 20px auto;
+				padding: 15px 30px;
+				background: #2196f3;
+				color: white;
+				border: none;
+				border-radius: 25px;
+				cursor: pointer;
+				font-size: 1.1em;
+				transition: 0.3s;
+			}
+			#capture-btn:hover {
+				background: #1976d2;
 			}
 			#result-container {
-				margin: 15px 0;
+				display: none;
+				margin-top: 30px;
+				padding: 20px;
+				background: white;
+				border-radius: 10px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 			}
-			.anomaly-label {
-				color: #f44336;
-				font-weight: bold;
-				margin-top: 5px;
-			}
-			#combined-canvas {
-				background-color: #f0f0f0;
+			#model-canvas {
+				width: 300px;
+				height: 300px;
 				border: 2px solid #f44336;
-				/* height: auto; */
-				margin: 10px 0;
+				border-radius: 10px;
+				margin: 0 auto;
 				display: block;
-				max-width: 300px;
 			}
-
-			#video {
-				transform: scaleX(-1); /* Espelha a câmera para parecer espelho */
+			.status-badge {
+				padding: 8px 15px;
+				border-radius: 20px;
+				font-weight: bold;
+				margin-top: 15px;
 			}
-
-			.anomaly-marker {
-				position: absolute;
-				width: 10px;
-				height: 10px;
-				background-color: red;
-				border-radius: 50%;
-				transform: translate(-50%, -50%);
+			.normal {
+				background: #4caf50;
+				color: white;
+			}
+			.anomalo {
+				background: #f44336;
+				color: white;
 			}
 		</style>
 	</head>
 	<body>
-		<h1>MoedaRara - Classificador de Moedas</h1>
+		<h1 style="text-align: center; color: #333">MoedaRara - Análise AR</h1>
 
-		<div class="controls">
-			<button id="switch-mode">Modo AR (Câmera)</button>
+		<div id="camera-container">
+			<video id="video" autoplay playsinline></video>
+			<div id="target-overlay"></div>
 		</div>
 
-		<!-- Seção de Upload de Imagem -->
-		<div id="upload-section" class="mode-section active">
-			<form id="form-image" enctype="multipart/form-data">
-				<label for="image">Escolha uma imagem de moeda:</label>
-				<br /><br />
-				<input type="file" id="image" name="image" accept="image/*" required />
-				<br /><br />
-				<button type="submit" id="submit-btn">Enviar Imagem</button>
-				<button type="button" id="reset-btn">Resetar</button>
-			</form>
+		<button id="capture-btn">Capturar Moeda</button>
 
-			<h2>Resultados</h2>
-			<p id="classe"></p>
-			<p id="status"></p>
-			<div id="result-container">
-				<p class="anomaly-label" id="anomaly-label" style="display: none">
-					Áreas anômalas destacadas em vermelho:
-				</p>
-				<canvas id="combined-canvas"></canvas>
+		<div id="result-container">
+			<canvas id="model-canvas"></canvas>
+			<div style="text-align: center; margin-top: 20px">
+				<h3 id="classe-texto" style="color: #333"></h3>
+				<div id="status" class="status-badge"></div>
 			</div>
-			<div id="imagens-container"></div>
-		</div>
-
-		<!-- Seção de Realidade Aumentada -->
-		<div id="ar-section" class="mode-section">
-			<div id="ar-container">
-				<video id="video" autoplay playsinline></video>
-				<canvas id="overlay"></canvas>
-			</div>
-
-			<div class="controls">
-				<button id="stop-ar">Voltar para Upload</button>
-			</div>
-
-			<h2>Resultados em Tempo Real</h2>
-			<p id="ar-classe"></p>
-			<p id="ar-status"></p>
 		</div>
 
 		<script>
-			// Elementos globais
-			const form = document.getElementById("form-image");
-			const resetButton = document.getElementById("reset-btn");
-			const submitButton = document.getElementById("submit-btn");
-			const imagensContainer = document.getElementById("imagens-container");
-			const switchModeBtn = document.getElementById("switch-mode");
-			const stopArBtn = document.getElementById("stop-ar");
-			const uploadSection = document.getElementById("upload-section");
-			const arSection = document.getElementById("ar-section");
-			const anomalyLabel = document.getElementById("anomaly-label");
-
-			// Variáveis para o modo AR
-			let arInterval;
 			const video = document.getElementById("video");
-			const overlay = document.getElementById("overlay");
-			const overlayCtx = overlay.getContext("2d");
+			const captureBtn = document.getElementById("capture-btn");
+			const modelCanvas = document.getElementById("model-canvas");
+			const ctx = modelCanvas.getContext("2d");
+			const resultContainer = document.getElementById("result-container");
 
-			// Alternar entre modos
-			switchModeBtn.addEventListener("click", () => {
-				uploadSection.classList.remove("active");
-				arSection.classList.add("active");
-				startARMode();
-			});
-
-			stopArBtn.addEventListener("click", () => {
-				stopARMode();
-				arSection.classList.remove("active");
-				uploadSection.classList.add("active");
-			});
-
-			// Funções do modo AR
-			function startARMode() {
-				navigator.mediaDevices
-					.getUserMedia({
-						video: {
-							facingMode: "environment",
-							width: { ideal: 1280 },
-							height: { ideal: 720 },
-						},
-					})
-					.then((stream) => {
-						video.srcObject = stream;
-						video.onloadedmetadata = () => {
-							overlay.width = video.videoWidth;
-							overlay.height = video.videoHeight;
-						};
-
-						// Iniciar processamento de frames
-						arInterval = setInterval(processFrame, 1000);
-					})
-					.catch((err) => {
-						console.error("Erro ao acessar câmera:", err);
-						alert(
-							"Não foi possível acessar a câmera. Por favor, verifique as permissões."
-						);
-					});
-			}
-
-			function stopARMode() {
-				if (arInterval) clearInterval(arInterval);
-				if (video.srcObject) {
-					video.srcObject.getTracks().forEach((track) => track.stop());
-					video.srcObject = null;
-				}
-				clearOverlay();
-			}
-
-			function processFrame() {
-				if (video.readyState !== 4 || video.paused || video.ended) return;
-
-				const canvas = document.createElement("canvas");
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				const canvasCtx = canvas.getContext("2d");
-				canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-				canvas.toBlob(
-					(blob) => {
-						const formData = new FormData();
-						formData.append("image", blob);
-
-						fetch("http://127.0.0.1:5000/classificar", {
-							method: "POST",
-							body: formData,
-						})
-							.then((response) => response.json())
-							.then((data) => {
-								updateARResults(data);
-								if (data.status === "Anômala") {
-									drawAnomalies(data);
-								} else {
-									clearOverlay();
-									drawCoinInfo(data.classe_moeda);
-								}
-							})
-							.catch((err) => console.error("Erro no processamento AR:", err));
+			// Acessar câmera
+			navigator.mediaDevices
+				.getUserMedia({
+					video: {
+						facingMode: "environment",
+						width: { ideal: 1280 },
+						height: { ideal: 720 },
 					},
-					"image/jpeg",
-					0.8
-				);
-			}
+				})
+				.then((stream) => {
+					video.srcObject = stream;
+				})
+				.catch((error) => {
+					console.error("Erro na câmera:", error);
+					alert("Erro ao acessar a câmera!");
+				});
 
-			function drawAnomalies(data) {
-				if (!data.diff_map || !data.original_img) return;
-
-				const originalImg = new Image();
-				const maskImg = new Image();
-
-				originalImg.onload = () => {
-					overlay.width = video.videoWidth;
-					overlay.height = video.videoHeight;
-					overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-
-					// 1. Desenhar frame da câmera
-					overlayCtx.drawImage(video, 0, 0, overlay.width, overlay.height);
-
-					// 2. Processar máscara
-					maskImg.onload = () => {
-						const tempCanvas = document.createElement("canvas");
-						tempCanvas.width = maskImg.width;
-						tempCanvas.height = maskImg.height;
-						const tempCtx = tempCanvas.getContext("2d");
-
-						tempCtx.drawImage(maskImg, 0, 0);
-						tempCtx.globalCompositeOperation = "source-in";
-						tempCtx.fillStyle = "rgba(255, 0, 0, 0.6)";
-						tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-						// Ajustar proporções
-						const scaleX = overlay.width / maskImg.width;
-						const scaleY = overlay.height / maskImg.height;
-
-						// Sobrepor máscara
-						overlayCtx.drawImage(
-							tempCanvas,
-							0,
-							0,
-							maskImg.width,
-							maskImg.height,
-							0,
-							0,
-							overlay.width,
-							overlay.height
-						);
-
-						// Texto informativo
-						overlayCtx.fillStyle = "rgba(0, 0, 0, 0.7)";
-						overlayCtx.fillRect(10, 10, 300, 60);
-						overlayCtx.fillStyle = "white";
-						overlayCtx.font = "20px Arial";
-						overlayCtx.fillText(
-							`Moeda: ${data.classe_moeda} | Status: ${data.status}`,
-							20,
-							40
-						);
-					};
-					maskImg.src = `data:image/png;base64,${data.diff_map}`;
-				};
-				originalImg.src = `data:image/png;base64,${data.original_img}`;
-			}
-
-			function drawCoinInfo(coinClass) {
-				overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-				overlayCtx.fillStyle = "rgba(0, 0, 0, 0.7)";
-				overlayCtx.fillRect(10, 10, 300, 60);
-				overlayCtx.fillStyle = "white";
-				overlayCtx.font = "20px Arial";
-				overlayCtx.fillText(`Moeda: ${coinClass} | Status: Normal`, 20, 40);
-			}
-
-			function clearOverlay() {
-				overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-			}
-
-			function updateARResults(data) {
-				document.getElementById(
-					"ar-classe"
-				).innerText = `Classe da Moeda: ${data.classe_moeda}`;
-				document.getElementById("ar-status").innerText = `Status: ${data.status}`;
-			}
-
-			// Funções do modo Upload
-			form.addEventListener("submit", async (event) => {
-				event.preventDefault();
-
-				// Resetar containers
-				imagensContainer.innerHTML = "";
-				anomalyLabel.style.display = "none";
-				const combinedCanvas = document.getElementById("combined-canvas");
-				const ctx = combinedCanvas.getContext("2d");
-				ctx.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
-
-				// Verificar se o canvas existe
-				if (!combinedCanvas) {
-					console.error("Elemento canvas não encontrado");
-					return;
-				}
-
-				// Feedback visual
-				submitButton.disabled = true;
-				submitButton.textContent = "Processando...";
-
+			// Capturar imagem
+			captureBtn.addEventListener("click", async () => {
 				try {
-					const formData = new FormData(form);
+					captureBtn.disabled = true;
+					captureBtn.textContent = "Processando...";
+
+					const canvas = document.createElement("canvas");
+					const context = canvas.getContext("2d");
+
+					canvas.width = 300;
+					canvas.height = 300;
+
+					context.drawImage(
+						video,
+						(video.videoWidth - 300) / 2,
+						(video.videoHeight - 300) / 2,
+						300,
+						300,
+						0,
+						0,
+						300,
+						300
+					);
+
+					const blob = await new Promise((resolve) =>
+						canvas.toBlob(resolve, "image/jpeg", 0.9)
+					);
+					const formData = new FormData();
+					formData.append("image", blob);
+
 					const response = await fetch("http://127.0.0.1:5000/classificar", {
 						method: "POST",
 						body: formData,
 					});
 
-					if (!response.ok) {
-						throw new Error(`Erro HTTP: ${response.status}`);
-					}
-
 					const data = await response.json();
-					console.log("Dados recebidos:", data);
+					resultContainer.style.display = "block";
 
-					// Exibir resultados
+					// Atualizar UI
 					document.getElementById(
-						"classe"
-					).innerText = `Classe da Moeda: ${data.classe_moeda}`;
-					document.getElementById("status").innerText = `Status: ${data.status}`;
+						"classe-texto"
+					).textContent = `Classe: ${data.classe_moeda}`;
+					const statusElement = document.getElementById("status");
+					statusElement.textContent = data.status;
+					statusElement.className = `status-badge ${
+						data.status === "Normal" ? "normal" : "anomalo"
+					}`;
 
-					// Exibir sobreposição de anomalias se existir
-					if (data.diff_map && data.original_img) {
-						anomalyLabel.style.display = "block";
-
+					// Desenhar modelo com anomalias
+					if (data.anomaly_mask && data.original_img) {
 						const originalImg = new Image();
-						const maskImg = new Image();
-
 						originalImg.onload = () => {
-							combinedCanvas.width = originalImg.width;
-							combinedCanvas.height = originalImg.height;
-							const ctx = combinedCanvas.getContext("2d");
-
-							// 1. Desenhar imagem original
+							modelCanvas.width = originalImg.width;
+							modelCanvas.height = originalImg.height;
 							ctx.drawImage(originalImg, 0, 0);
 
-							// 2. Preparar máscara vermelha
+							const maskImg = new Image();
 							maskImg.onload = () => {
-								// Criar contexto temporário
-								const tempCanvas = document.createElement("canvas");
-								tempCanvas.width = originalImg.width;
-								tempCanvas.height = originalImg.height;
-								const tempCtx = tempCanvas.getContext("2d");
-
-								// Pintar de vermelho onde há anomalias
-								tempCtx.drawImage(maskImg, 0, 0);
-								tempCtx.globalCompositeOperation = "source-in";
-								tempCtx.fillStyle = "rgba(255, 0, 0, 0.5)";
-								tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-								// Sobrepor no canvas principal
-								ctx.drawImage(tempCanvas, 0, 0);
+								ctx.globalAlpha = 0.5;
+								ctx.drawImage(maskImg, 0, 0);
+								ctx.globalAlpha = 1.0;
 							};
-							maskImg.src = `data:image/png;base64,${data.diff_map}`;
+							maskImg.src = `data:image/png;base64,${data.anomaly_mask}`;
 						};
 						originalImg.src = `data:image/png;base64,${data.original_img}`;
 					}
-
-					// Exibir imagem original enviada
-					const fileInput = document.getElementById("image");
-					if (fileInput.files && fileInput.files[0]) {
-						const moedaImage = new Image();
-						moedaImage.src = URL.createObjectURL(fileInput.files[0]);
-						moedaImage.alt = "Imagem da moeda enviada";
-						imagensContainer.appendChild(moedaImage);
-					}
-				} catch (err) {
-					console.error("Erro na requisição:", err);
-					document.getElementById("classe").innerText =
-						"Erro no processamento da imagem";
-					document.getElementById("status").innerText = "";
+				} catch (error) {
+					console.error("Erro:", error);
+					alert("Erro ao processar moeda!");
 				} finally {
-					submitButton.disabled = false;
-					submitButton.textContent = "Enviar Imagem";
+					captureBtn.disabled = false;
+					captureBtn.textContent = "Capturar Moeda";
 				}
-			});
-
-			// Função para resetar a tela
-			resetButton.addEventListener("click", () => {
-				document.getElementById("classe").innerText = "";
-				document.getElementById("status").innerText = "";
-				imagensContainer.innerHTML = "";
-				anomalyLabel.style.display = "none";
-				const combinedCanvas = document.getElementById("combined-canvas");
-				if (combinedCanvas) {
-					combinedCanvas
-						.getContext("2d")
-						.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
-				}
-				form.reset();
-			});
-
-			// Limpar recursos ao sair
-			window.addEventListener("beforeunload", () => {
-				stopARMode();
 			});
 		</script>
 	</body>
