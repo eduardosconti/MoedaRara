@@ -10,6 +10,7 @@ cd Moeda
 cd Scripts
 activate
 cd ..
+cd ..
 ```
 
 A partir de agora, tudo será executado dentro do venv Moeda pelo terminal.
