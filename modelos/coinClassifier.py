@@ -18,7 +18,7 @@ transform = transforms.Compose([
 ])
 
 # Diretório dos dados
-data_dir = "C:/Users/luiza/MoedaRara/modelos/Cruzeiro_Novo"
+data_dir = "C:/Users/Pedro landim/Desktop/rv/MoedaRara/Cruzeiro_Novo"
 dataset = ImageFolder(root=data_dir, transform=transform)
 
 # Divisão entre treino e teste
